@@ -15,7 +15,7 @@ const transporter = nodemailer.createTransport({
 // Datos del "lead" que recibirá el correo
 const lead = {
   name: "Juan",
-  email: "juan@example.com",
+  email: "surimanw@gmail.com",
   birthdate: "1990-09-30"  // Fecha de nacimiento (puede ser útil si la manejas luego)
 };
 

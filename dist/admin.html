@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin - Ver Leads</title>
+  <style>
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    table, th, td {
+      border: 1px solid black;
+    }
+    th, td {
+      padding: 8px;
+      text-align: left;
+    }
+  </style>
+</head>
+<body>
+  <h1>Leads Guardados</h1>
+  <table>
+    <thead>
+      <tr>
+        <th>Nombre</th>
+        <th>Email</th>
+        <th>Fecha de Nacimiento</th>
+      </tr>
+    </thead>
+    <tbody id="leads-table-body">
+      <!-- Aquí se insertarán los leads -->
+    </tbody>
+  </table>
+
+  <script>
+    async function fetchLeads() {
+      try {
+        const response = await fetch('/api/leads'); // Realiza la solicitud al servidor
+        const leads = await response.json();
+        
+        const tbody = document.getElementById('leads-table-body');
+        tbody.innerHTML = ''; // Limpia la tabla
+
+        leads.forEach(lead => {
+          const row = document.createElement('tr');
+          row.innerHTML = `
+            <td>${lead.name}</td>
+            <td>${lead.email}</td>
+            <td>${new Date(lead.birthdate).toLocaleDateString()}</td>
+          `;
+          tbody.appendChild(row);
+        });
+      } catch (error) {
+        console.error('Error al obtener los leads:', error);
+      }
+    }
+
+    // Llama a la función al cargar la página
+    window.onload = fetchLeads;
+  </script>
+</body>
+</html>
