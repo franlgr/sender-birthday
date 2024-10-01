@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lead Form</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background-color: #f4f4f4;
+    }
+    form {
+      background-color: #fff;
+      padding: 20px;
+      max-width: 400px;
+      margin: 0 auto;
+      border-radius: 5px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+    input[type="text"], input[type="email"], input[type="date"] {
+      width: 100%;
+      padding: 10px;
+      margin: 10px 0;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+    }
+    button {
+      padding: 10px 15px;
+      background-color: #28a745;
+      border: none;
+      color: white;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #218838;
+    }
+  </style>
+</head>
+<body>
+  <h1>Formulario de Lead</h1>
+  <form id="leadForm">
+    <input type="text" id="name" name="name" placeholder="Nombre" required>
+    <input type="email" id="email" name="email" placeholder="Correo electrónico" required>
+    <label for="birthdate">Fecha de nacimiento:</label>
+    <input type="date" id="birthdate" name="birthdate" required>
+    <button type="submit">Enviar</button>
+  </form>
+
+  <script>
+    const form = document.getElementById('leadForm');
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const name = document.getElementById('name').value;
+      const email = document.getElementById('email').value;
+      const birthdate = document.getElementById('birthdate').value;
+
+      const data = {
+        name: name,
+        email: email,
+        birthdate: birthdate
+      };
+
+      try {
+        const response = await fetch('/api/leads', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(data),
+        });
+
+        const result = await response.json();
+        alert(result.message);
+      } catch (error) {
+        console.error('Error al enviar el formulario:', error);
+      }
+    });
+  </script>
+</body>
+</html>
