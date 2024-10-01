@@ -2,12 +2,81 @@ require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
 const nodemailer = require('nodemailer');
-const schedule = require('node-schedule'); // Para programar tareas
+const schedule = require('node-schedule');
+const path = require('path');
+const multer = require('multer');
+const fs = require('fs/promises'); // Asegúrate de importar solo 'fs/promises'
+const upload = multer({ dest: 'uploads/' });
 
 // Configurar Express
 const app = express();
 app.use(express.json());
 app.use(express.static('dist'));  // Sirve el frontend desde dist
+app.set('view engine', 'ejs');
+
+
+const customHtmlWelcome = path.join(__dirname, 'custom', 'welcome-letter.html');
+const customHtmlBirthday = path.join(__dirname, 'custom', 'birthday-letter.html');
+
+// Servir archivos estáticos desde el directorio "public"
+app.use(express.static(path.join(__dirname, 'public')));
+
+// Ruta para renderizar el formulario inicial
+app.get('/edit-bienvenido', (req, res) => {
+  res.render('welcome-letter');
+});
+
+app.get('/edit-feliz-cumple', (req, res) => {
+  res.render('birthday-letter');
+});
+
+
+app.get('/load-birthday-html', async (req, res) => {
+  try {
+    const customHtml = await fs.readFile(customHtmlBirthday, 'utf8');
+    res.send(customHtml);
+  } catch (error) {
+    console.error(error);
+    res.status(500).send('Error al cargar el HTML personalizado.');
+  }
+});
+
+// Ruta para guardar el HTML personalizado
+app.post('/save-birthday-html', async (req, res) => {
+  const { htmlContent } = req.body;
+
+  try {
+    await writeFile(customHtmlBirthday, htmlContent);
+    res.sendStatus(200);
+  } catch (error) {
+    console.error('Error al guardar el HTML personalizado:', error);
+    res.sendStatus(500);
+  }
+});
+
+// Ruta para cargar el HTML personalizado
+app.get('/load-welcome-html', async (req, res) => {
+  try {
+    const customHtml = await fs.readFile(customHtmlWelcome, 'utf8');
+    res.send(customHtml);
+  } catch (error) {
+    console.error(error);
+    res.status(500).send('Error al cargar el HTML personalizado.');
+  }
+});
+
+// Ruta para guardar el HTML personalizado
+app.post('/save-welcome-html', async (req, res) => {
+  const { htmlContent } = req.body;
+
+  try {
+    await writeFile(customHtmlWelcome, htmlContent);
+    res.sendStatus(200);
+  } catch (error) {
+    console.error('Error al guardar el HTML personalizado:', error);
+    res.sendStatus(500);
+  }
+});
 
 // Conectar a MongoDB
 mongoose.connect(process.env.MONGO_URI, {
@@ -28,6 +97,7 @@ const leadSchema = new mongoose.Schema({
 
 const Lead = mongoose.model('Lead', leadSchema);
 
+
 // Configurar Nodemailer
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST,
@@ -37,7 +107,6 @@ const transporter = nodemailer.createTransport({
     pass: process.env.SMTP_PASS
   }
 });
-
 
 
 // Definir esquema de MongoDB para almacenar datos de Wi-Fi
@@ -78,23 +147,6 @@ app.post('/api/wifi', async (req, res) => {
   }
 });
 
-// Ruta para obtener los datos de Wi-Fi
-app.get('/api/wifi', async (req, res) => {
-  try {
-      const wifiData = await Wifi.findOne(); // Obtiene el primer documento de Wi-Fi
-      if (!wifiData) {
-          return res.status(404).json({ message: 'No se encontraron datos de Wi-Fi.' });
-      }
-      res.json(wifiData); // Devuelve los datos de Wi-Fi
-  } catch (error) {
-      res.status(500).json({ message: 'Error al obtener los datos de Wi-Fi.', error });
-  }
-});
-
-
-
-
-
 // Ruta para recibir leads
 app.post('/api/leads', async (req, res) => {
   const { name, email, birthdate, accept } = req.body;
@@ -116,118 +168,39 @@ console.log(lead)
   }
 });
 
+// Ruta para obtener los datos de Wi-Fi
+app.get('/api/wifi', async (req, res) => {
+  try {
+      const wifiData = await Wifi.findOne(); // Obtiene el primer documento de Wi-Fi
+      if (!wifiData) {
+          return res.status(404).json({ message: 'No se encontraron datos de Wi-Fi.' });
+      }
+      res.json(wifiData); // Devuelve los datos de Wi-Fi
+  } catch (error) {
+      res.status(500).json({ message: 'Error al obtener los datos de Wi-Fi.', error });
+  }
+});
+
+
 // Enviar correo al cargar nuevo lead
 async function sendNotyEmail(lead) {
+  try {
+    // Lee el contenido del archivo HTML
+    const customHtmlContent = await fs.readFile(customHtmlWelcome, 'utf8');
 
-    try {
-      await transporter.sendMail({
-        from: `"Bienvenido a Florinda Coffee House" <felicitaciones@sender.picoai.app>`,
-        to: lead.email,
-        subject: `Gracias por tu visita ${lead.name}!`,
-        html: `
-        <div
-  style="color:#000;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif,'Apple Color Emoji','Segoe UI Emoji','Segoe UI Symbol';line-height:18px">
-  <div>
-    <table border="0" cellpadding="0" cellspacing="0" width="100%" height="100%" bgcolor="#f9f9f9">
-      <tbody>
-        <tr>
-          <td>
-            <div style="margin:0 auto;max-width:600px;padding:20px 10px">
-              <table border="0" cellpadding="0" cellspacing="0" width="100%" height="100%">
-                <tbody>
-                  <tr>
-                    <td>
-                      <table border="0" cellpadding="0" cellspacing="0" width="100%">
-                        <tbody>
-                          <tr>
-                            <td>
-                              <a href="#" title="Florinda Coffee"
-                                style="color:#ff6154!important;display:block;text-align:left!important;text-decoration:none"
-                                target="_blank">
-                                🎉
-                                <span
-                                  style="color:#ff6154;font-family:'Helvetica Neue',Helvetica,Arial,'Lucida Grande',sans-serif;font-size:23px;font-weight:500;line-height:33px;margin-left:5px;vertical-align:top">FlorindaCoffee</span>
-                                  🎉
-                              </a>
-                            </td>
-                          </tr>
-                        </tbody>
-                      </table>
-                    </td>
-                  </tr>
-                  <tr>
-                    <td height="20"></td>
-                  </tr>
-                  <tr>
-                    <td>
-                      <div style="background-color:#fff;border-radius:3px;margin-bottom:20px;padding:20px">
-                        <table border="0" cellpadding="0" cellspacing="0" width="100%" bgcolor="#ffffff">
-                          <tbody>
-                            <tr>
-                              <td style="font-size:16px;line-height:23px">
-                                <p style="margin:0px">
-                                  <strong><a href="#" style="color:#ff6154!important;text-decoration:none"
-                                      target="_blank">¡Bienvenido a Florinda! 🌟</a></strong>
-                                  Nos alegra mucho tenerte con nosotros. En Florinda, no solo servimos comida deliciosa 🍽️,
-                                  sino que también creamos un ambiente donde las experiencias y los momentos inolvidables
-                                  se comparten ❤️.
-                                  Queremos que te sientas como en casa desde el primer día. 
-                                  Imagina disfrutar de una comida exquisita, rodeado de tus seres queridos 
-                                  👨‍👩‍👧‍👦, mientras compartes momentos especiales. Estamos aquí para ofrecerte un servicio excepcional
-                                  y sabores que enamoran 😍.
-                                </p>
-                                <p style="margin:0 0 20px">
-                                  Para agradecerte por elegirnos, te invitamos a disfrutar de un 
-                                  [descuento/platillo gratis/bebida de cortesía] en tu próxima visita. 🎁 
-                                  Queremos asegurarnos de que tu experiencia sea memorable y llena de alegría.
-                                </p>
-                                <a rel="noopener"
-                                  href="https://wa.me/+541165492404?text=Hola,%20buenas%20tardes,%20me%20gustaría%20acceder%20a%20mi%20descuento."
-                                  style="background-color:#ff6154;border-radius:3px;color:#fff!important;display:block;font-size:15px;font-weight:600!important;height:20px!important;letter-spacing:0;line-height:20px;margin-bottom:30px;padding:20px 0;text-align:center;text-decoration:none;white-space:nowrap;width:100%"
-                                  target="_blank">ACCEDE A TU DESCUENTO</a>
-                                <p style="word-break:break-all">
-                                  ¡Síguenos en Instagram!
-                                  Descubre nuestras delicias y momentos especiales en @florindacoffee 🍰✨
-                                </p>
-                                <p style="margin:0 0 20px;padding:0">
-                                  Dudas o consultas florindacoffee@gmail.com
-                                </p>
-                              </td>
-                            </tr>
-                          </tbody>
-                        </table>
-                      </div>
-                      <div style="color:#6f6f6f;font-size:12px;margin:54px auto auto;text-align:center;width:510px"
-                        align="center">
-                        <p>Café de Especialidad-Viennoiserie-Patisserie-Brunch Estamos en Caballito:📍Av Acoyte 272
-                        <p>Armor Template®
-                          Transformando ideas en soluciones efectivas.
-                          © 2022 Armor Template. Todos los derechos reservados. <a href="#"
-                            style="color:#6f6f6f!important;text-decoration:underline" target="_blank">unsubscribe
-                            here</a>.</p>
-                        </p>
-                      </div>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
-</div>
+    await transporter.sendMail({
+      from: `"Bienvenido a Florinda Coffee House" <felicitaciones@sender.picoai.app>`,
+      to: lead.email,
+      subject: `Gracias por tu visita ${lead.name}!`,
+      html: customHtmlContent // Envía el contenido HTML leído
+    });
 
-        `
-      });
-
-      console.log(`Correo de BIENVENIDA enviado a ${lead.email}`);
-    } catch (error) {
-      console.error(`Error al enviar el correo de cumpleaños a ${lead.email}:`, error);
-    }
-  
+    console.log(`Correo de BIENVENIDA enviado a ${lead.email}`);
+  } catch (error) {
+    console.error(`Error al enviar el correo de cumpleaños a ${lead.email}:`, error);
+  }
 }
+
 
 // Función para programar el envío de correos en la fecha de cumpleaños
 function scheduleBirthdayEmail(lead) {
@@ -243,132 +216,18 @@ function scheduleBirthdayEmail(lead) {
     }
   
     // Establecer la hora predeterminada para el envío del correo, por ejemplo, 9:00 AM
-    birthdate.setHours(12, 35, 0, 0);  // 9:00 AM, 0 minutos, 0 segundos, 0 milisegundos
+    birthdate.setHours(10, 10, 0, 0);  // 9:00 AM, 0 minutos, 0 segundos, 0 milisegundos
   
     console.log('Correo programado', lead.email, ' ', birthdate)
     // Programar la tarea de envío de correo
     const job = schedule.scheduleJob(birthdate, async () => {
       try {
+        const customHtmlContent = await fs.readFile(customHtmlBirthday, 'utf8');
         await transporter.sendMail({
           from: `"Feliz Cumpleaños!" <felicitaciones@sender.picoai.app>`,
           to: lead.email,
           subject: `Florinda Coffee House`,
-          html: `
-  <div
-    style="color:#000;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif,'Apple Color Emoji','Segoe UI Emoji','Segoe UI Symbol';line-height:18px">
-    <div>
-      <table border="0" cellpadding="0" cellspacing="0" width="100%" height="100%" bgcolor="#f9f9f9">
-        <tbody>
-          <tr>
-            <td>
-              <div style="margin:0 auto;max-width:600px;padding:20px 10px">
-                <table border="0" cellpadding="0" cellspacing="0" width="100%" height="100%">
-                  <tbody>
-                    <tr>
-                      <td>
-                        <table border="0" cellpadding="0" cellspacing="0" width="100%">
-                          <tbody>
-                            <tr>
-                              <td>
-                                <a href="#" title="Product Hunt"
-                                  style="color:#ff6154!important;display:block;text-align:left!important;text-decoration:none"
-                                  target="_blank">
-                                  🎁
-                                  <span
-                                    style="color:#ff6154;font-family:'Helvetica Neue',Helvetica,Arial,'Lucida Grande',sans-serif;font-size:23px;font-weight:500;line-height:33px;margin-left:5px;vertical-align:top">FlorindaCoffee</span>
-                                      🎁
-                                </a>
-                              </td>
-                              <td style="color:#6f6f6f;font-size:13px;text-align:right" align="right">
-                            
-                              </td>
-                            </tr>
-                          </tbody>
-                        </table>
-                      </td>
-                    </tr>
-                    <tr>
-                      <td height="20"></td>
-                    </tr>
-                    <tr>
-                      <td height="20"></td>
-                    </tr>
-                    <tr>
-                      <td>
-                        <div style="background-color:#fff;border-radius:3px;margin-bottom:20px;padding:20px">
-                          <table border="0" cellpadding="0" cellspacing="0" width="100%" bgcolor="#ffffff">
-                            <tbody>
-                              <tr>
-                                <td style="font-size:16px;line-height:23px">
-                                  <p style="margin:0px">
-
-                                    <strong><a href="#" style="color:#ff6154!important;text-decoration:none"
-                                        target="_blank">¡Feliz cumpleaños! 🎉</a></strong>
-                                    Hoy es un día muy especial y queremos celebrarlo contigo ${lead.name}. En Florinda, no solo
-                                    servimos comida deliciosa 🍽️,
-                                    sino que también creamos un ambiente donde las experiencias y los momentos
-                                    inolvidables se comparten ❤️.
-                                    Para hacer tu cumpleaños aún más especial, tenemos una sorpresa exclusiva: un
-                                    [descuento/platillo gratis/bebida de cortesía] en tu próxima visita. 🎁 Queremos
-                                    agradecerte por ser parte de nuestra familia y permitirnos acompañarte en tus
-                                    momentos especiales.
-                                    Imagina disfrutar de una comida exquisita, rodeado de tus seres queridos
-                                    👨‍👩‍👧‍👦, mientras celebras. Estamos aquí para que tu celebración sea memorable,
-                                    con un ambiente acogedor, un servicio excepcional y, por supuesto, sabores que
-                                    enamoran 😍.
-                                    Para canjear tu regalo, simplemente presenta esta carta cuando nos visites. Nos
-                                    encantaría que compartieras tu alegría con nosotros.
-                                    Una vez más, ¡feliz cumpleaños! 🎂 Que este nuevo año esté lleno de momentos
-                                    maravillosos, alegría y, por supuesto, ¡deliciosas comidas! 🍰
-                                    Con cariño,
-                                    Florinda.
-                                  </p>
-                                  <p style="margin:0 0 20px">
-                                    Te agradeceríamos que reservaras una fecha para tu festejo.
-                                    Estamos aquí para asegurarnos de que tu celebración sea inolvidable.
-                                    No dudes en contactarnos para cualquier consulta o para hacer tu reserva.
-                                    Puedes hacerlo clickeando mas abajo!
-                                  </p>
-                                  <a rel="noopener"
-                                    href="https://wa.me/+541165492404?text=Hola,%20buenas%20tardes,%20me%20gustaría%20acceder%20a%20mi%20descuento%20por%20mi%20cumpleaños,%20quiero%20hacer%20una%20reserva%20para%20festejar%20mi%20cumpleaños,%20como%20podemos%20hacer?"
-                                    style="background-color:#ff6154;border-radius:3px;color:#fff!important;display:block;font-size:15px;font-weight:600!important;height:20px!important;letter-spacing:0;line-height:20px;margin-bottom:30px;padding:20px 0;text-align:center;text-decoration:none;white-space:nowrap;width:100%"
-                                    target="_blank">ACCEDE A TU DESCUENTO</a>
-
-                                  <p style="word-break:break-all">
-                                    ¡Síguenos en Instagram!
-                                    Descubre nuestras delicias y momentos especiales en @florindacoffee 🍰✨
-                                  </p>
-                                  <p style="margin:0 0 20px;padding:0">
-                                    Dudas o consultas florindacoffee@gmail.com
-                                    <br>
-                                  </p>
-                                </td>
-                              </tr>
-                            </tbody>
-                          </table>
-                        </div>
-                        <div style="color:#6f6f6f;font-size:12px;margin:54px auto auto;text-align:center;width:510px"
-                          align="center">
-                          <p>Café de Especialidad-Viennoiserie-Patisserie-Brunch Estamos en Caballito:📍Av Acoyte 272
-                            <p>Armor Template®
-                              Transformando ideas en soluciones efectivas.
-                              © 2022 Armor Template. Todos los derechos reservados. <a href="#"
-                                style="color:#6f6f6f!important;text-decoration:underline" target="_blank">unsubscribe
-                                here</a>.</p>
-                          </p>
-                        </div>
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-  </div>
-  `
+          html: customHtmlContent
         });
   
         console.log(`Correo de cumpleaños enviado a ${lead.email}`);
