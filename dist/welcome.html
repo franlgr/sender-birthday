@@ -29,8 +29,30 @@
         <h1>Bienvenido a la Cafetería Florinda</h1>
         <p>Gracias por visitarnos. Estamos encantados de tenerte aquí y esperamos que disfrutes de tu experiencia.</p>
         <h2>Contraseña del Wi-Fi</h2>
-        <p class="wifi-password">CafeteriaFlorinda123</p>
+        <p id="wifi-credentials" class="wifi-password">Cargando...</p>
     </div>
+
+    <script>
+        async function fetchWifiCredentials() {
+            try {
+                const response = await fetch('/api/wifi'); // Realiza la solicitud al servidor
+                if (!response.ok) {
+                    throw new Error('Error en la respuesta del servidor');
+                }
+                const data = await response.json();
+                
+                // Muestra la red y la contraseña en la interfaz
+                const wifiElement = document.getElementById('wifi-credentials');
+                wifiElement.textContent = `Red: ${data.networkName} - Contraseña: ${data.wifiPassword}`;
+            } catch (error) {
+                console.error('Error al obtener los datos de Wi-Fi:', error);
+                document.getElementById('wifi-credentials').textContent = 'No se pudieron obtener los datos de Wi-Fi.';
+            }
+        }
+
+        // Llama a la función para obtener las credenciales al cargar la página
+        window.onload = fetchWifiCredentials;
+    </script>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
 </body>
