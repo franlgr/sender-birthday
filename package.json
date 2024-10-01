@@ -1,0 +1,22 @@
+{
+    "name": "email-scheduler",
+    "version": "1.0.0",
+    "description": "Servidor para enviar correos de cumpleaños y almacenar datos en MongoDB",
+    "main": "server.js",
+    "scripts": {
+      "dev": "node server.js"
+    },
+    "dependencies": {
+      "dotenv": "^16.1.4",
+      "express": "^4.18.2",
+      "mongoose": "^7.0.3",
+      "nodemailer": "^6.9.3",
+      "node-schedule": "^2.1.0"
+    },
+    "engines": {
+      "node": ">=14"
+    },
+    "author": "",
+    "license": "ISC"
+  }
+  
