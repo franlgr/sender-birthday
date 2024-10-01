@@ -20,6 +20,7 @@ mongoose.connect(process.env.MONGO_URI, {
 // Definir esquema de MongoDB para almacenar leads
 const leadSchema = new mongoose.Schema({
   name: String,
+  accept: Boolean,
   email: String,
   birthdate: Date,
   createdAt: { type: Date, default: Date.now }
@@ -37,22 +38,46 @@ const transporter = nodemailer.createTransport({
   }
 });
 
+
+
 // Ruta para recibir leads
 app.post('/api/leads', async (req, res) => {
-  const { name, email, birthdate } = req.body;
+  const { name, email, birthdate, accept } = req.body;
 
   try {
-    const lead = new Lead({ name, email, birthdate });
+    const lead = new Lead({ name, email, birthdate, accept });
     await lead.save();
 
     // Programar envío de correo para la fecha de cumpleaños
     scheduleBirthdayEmail(lead);
+    setTimeout(() => {
+      sendNotyEmail(lead);
+    }, 3000);
+    // sendNotyEmail(lead);
 console.log(lead)
     res.status(200).send({ message: 'Lead guardado exitosamente.' });
   } catch (error) {
     res.status(500).send({ message: 'Error al guardar el lead.', error });
   }
 });
+
+// Enviar correo al cargar nuevo lead
+async function sendNotyEmail(lead) {
+
+    try {
+      await transporter.sendMail({
+        from: `"Bienvenido a Florinda Coffee House" <felicitaciones@sender.picoai.app>`,
+        to: lead.email,
+        subject: `¡LETTER  ${lead.name}!`,
+        html: `<h1>¡WELCOME!</h1>Bienvenido a Florinda Coffee House<p> ${lead.name}.</p>`
+      });
+
+      console.log(`Correo de BIENVENIDA enviado a ${lead.email}`);
+    } catch (error) {
+      console.error(`Error al enviar el correo de cumpleaños a ${lead.email}:`, error);
+    }
+  
+}
 
 // Función para programar el envío de correos en la fecha de cumpleaños
 function scheduleBirthdayEmail(lead) {
@@ -63,13 +88,14 @@ function scheduleBirthdayEmail(lead) {
     birthdate.setFullYear(today.getFullYear());
   
     // Si ya pasó el cumpleaños este año, programar para el próximo año
-    // if (birthdate < today) {
-    //   birthdate.setFullYear(today.getFullYear() + 1);
-    // }
+    if (birthdate < today) {
+      birthdate.setFullYear(today.getFullYear() + 1);
+    }
   
     // Establecer la hora predeterminada para el envío del correo, por ejemplo, 9:00 AM
     birthdate.setHours(12, 35, 0, 0);  // 9:00 AM, 0 minutos, 0 segundos, 0 milisegundos
   
+    console.log('Correo programado', lead.email, ' ', birthdate)
     // Programar la tarea de envío de correo
     const job = schedule.scheduleJob(birthdate, async () => {
       try {
@@ -117,7 +143,7 @@ async function reprogramarCumpleaños() {
           scheduleBirthdayEmail(lead);
         }
       });
-      console.log(leads)
+      // console.log(leads)
   
       console.log('Cumpleaños reprogramados.');
     } catch (error) {
