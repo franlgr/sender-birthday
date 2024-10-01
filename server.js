@@ -46,7 +46,7 @@ app.post('/save-birthday-html', async (req, res) => {
   const { htmlContent } = req.body;
 
   try {
-    await writeFile(customHtmlBirthday, htmlContent);
+    await fs.writeFile(customHtmlBirthday, htmlContent);
     res.sendStatus(200);
   } catch (error) {
     console.error('Error al guardar el HTML personalizado:', error);
@@ -70,7 +70,7 @@ app.post('/save-welcome-html', async (req, res) => {
   const { htmlContent } = req.body;
 
   try {
-    await writeFile(customHtmlWelcome, htmlContent);
+    await fs.writeFile(customHtmlWelcome, htmlContent);
     res.sendStatus(200);
   } catch (error) {
     console.error('Error al guardar el HTML personalizado:', error);

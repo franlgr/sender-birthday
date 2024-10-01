@@ -1,6 +1,6 @@
 server {
     listen 80;
-    server_name sender.picoai.app;
+    server_name florinda-wi-fi.picoai.app;
 
     # SSL configuration
     listen 443 ssl http2;
