@@ -16,13 +16,21 @@ app.set('view engine', 'ejs');
 
 
 const customHtmlWelcome = path.join(__dirname, 'custom', 'welcome-letter.html');
+const customHtmlBefore = path.join(__dirname, 'custom', 'before-letter.html');
 const customHtmlBirthday = path.join(__dirname, 'custom', 'birthday-letter.html');
 
 // Servir archivos estáticos desde el directorio "public"
 app.use(express.static(path.join(__dirname, 'public')));
 
+
+
 // Ruta para renderizar el formulario inicial
 app.get('/edit-bienvenido', (req, res) => {
+  res.render('welcome-letter');
+});
+
+// Ruta para renderizar el formulario inicial
+app.get('/edit-recordatorio', (req, res) => {
   res.render('welcome-letter');
 });
 
@@ -47,6 +55,30 @@ app.post('/save-birthday-html', async (req, res) => {
 
   try {
     await fs.writeFile(customHtmlBirthday, htmlContent);
+    res.sendStatus(200);
+  } catch (error) {
+    console.error('Error al guardar el HTML personalizado:', error);
+    res.sendStatus(500);
+  }
+});
+
+
+app.get('/load-before-html', async (req, res) => {
+  try {
+    const customHtml = await fs.readFile(customHtmlBefore, 'utf8');
+    res.send(customHtml);
+  } catch (error) {
+    console.error(error);
+    res.status(500).send('Error al cargar el HTML personalizado.');
+  }
+});
+
+// Ruta para guardar el HTML personalizado
+app.post('/save-before-html', async (req, res) => {
+  const { htmlContent } = req.body;
+
+  try {
+    await fs.writeFile(customHtmlBefore, htmlContent);
     res.sendStatus(200);
   } catch (error) {
     console.error('Error al guardar el HTML personalizado:', error);
@@ -203,40 +235,62 @@ async function sendNotyEmail(lead) {
 
 
 // Función para programar el envío de correos en la fecha de cumpleaños
+// Función para programar el envío de correos en la fecha de cumpleaños y 5 días antes
 function scheduleBirthdayEmail(lead) {
-    const birthdate = new Date(lead.birthdate);
-    const today = new Date();
-    
-    // Asegurarse de que sea el cumpleaños de este año
-    birthdate.setFullYear(today.getFullYear());
+  const birthdate = new Date(lead.birthdate);
+  const today = new Date();
   
-    // Si ya pasó el cumpleaños este año, programar para el próximo año
-    if (birthdate < today) {
-      birthdate.setFullYear(today.getFullYear() + 1);
-    }
-  
-    // Establecer la hora predeterminada para el envío del correo, por ejemplo, 9:00 AM
-    birthdate.setHours(10, 10, 0, 0);  // 9:00 AM, 0 minutos, 0 segundos, 0 milisegundos
-  
-    console.log('Correo programado', lead.email, ' ', birthdate)
-    // Programar la tarea de envío de correo
-    const job = schedule.scheduleJob(birthdate, async () => {
-      try {
-        const customHtmlContent = await fs.readFile(customHtmlBirthday, 'utf8');
-        await transporter.sendMail({
-          from: `"Feliz Cumpleaños!" <felicitaciones@sender.picoai.app>`,
-          to: lead.email,
-          subject: `Florinda Coffee House`,
-          html: customHtmlContent
-        });
-  
-        console.log(`Correo de cumpleaños enviado a ${lead.email}`);
-      } catch (error) {
-        console.error(`Error al enviar el correo de cumpleaños a ${lead.email}:`, error);
-      }
-    });
+  // Asegurarse de que sea el cumpleaños de este año
+  birthdate.setFullYear(today.getFullYear());
+
+  // Si ya pasó el cumpleaños este año, programar para el próximo año
+  if (birthdate < today) {
+    birthdate.setFullYear(today.getFullYear() + 1);
   }
+
+  // Establecer la hora predeterminada para el envío del correo, por ejemplo, 9:00 AM
+  birthdate.setHours(10, 0, 0, 0);  // 10:00 AM
+
+  // Enviar el correo de cumpleaños
+  console.log('Correo de cumpleaños programado para', lead.email, 'en', birthdate);
+  const jobBirthday = schedule.scheduleJob(birthdate, async () => {
+    try {
+      const customHtmlContent = await fs.readFile(customHtmlBirthday, 'utf8');
+      await transporter.sendMail({
+        from: `"Feliz Cumpleaños!" <felicitaciones@sender.picoai.app>`,
+        to: lead.email,
+        subject: `Florinda Coffee House`,
+        html: customHtmlContent
+      });
+
+      console.log(`Correo de Cumpleaños enviado a ${lead.email}`);
+    } catch (error) {
+      console.error(`Error al enviar el correo de cumpleaños a ${lead.email}:`, error);
+    }
+  });
+
+  // Programar el envío de un correo 5 días antes del cumpleaños
+  const reminderDate = new Date(birthdate);
+  reminderDate.setDate(birthdate.getDate() - 5);  // 5 días antes del cumpleaños
+  console.log('Correo de recordatorio programado para', lead.email, 'en', reminderDate);
   
+  const jobReminder = schedule.scheduleJob(reminderDate, async () => {
+    try {
+      const customHtmlBefore = await fs.readFile(customHtmlBefore, 'utf8');
+      await transporter.sendMail({
+        from: `"Recordatorio de Cumpleaños" <recordatorio@sender.picoai.app>`,
+        to: lead.email,
+        subject: `Florinda Coffee House - ¡Pronto es tu cumpleaños!`,
+        html: customHtmlBefore
+      });
+
+      console.log(`Correo de Recordatorio enviado a ${lead.email}`);
+    } catch (error) {
+      console.error(`Error al enviar el correo de recordatorio a ${lead.email}:`, error);
+    }
+  });
+}
+
 
 // Ruta para obtener todos los leads guardados
 app.get('/api/leads', async (req, res) => {

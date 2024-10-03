@@ -162,7 +162,7 @@
 
       // Cargar el HTML personalizado al iniciar la página
       try {
-        const response = await fetch('/load-welcome-html');
+        const response = await fetch('/load-before-html');
         if (response.ok) {
           customHtmlContent = await response.text();
           updateHtmlPreview(); // Actualizar vista previa y cargar en el iframe
@@ -223,7 +223,7 @@
         const newHtmlContent = $('#htmlCode').val();
 
         try {
-          const response = await fetch('/save-welcome-html', {
+          const response = await fetch('/save-before-html', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json'

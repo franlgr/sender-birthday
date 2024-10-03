@@ -116,6 +116,32 @@
   </form>
 
   <script>
+
+    function saveUser(datoUser) {
+        // Convertir el objeto a una cadena JSON y guardarlo
+        localStorage.setItem('usuario', JSON.stringify(datoUser));
+    }
+
+    function getUser() {
+        // Obtener el valor desde localStorage
+        const userSaved = localStorage.getItem('usuario');
+        
+        if (userSaved) {
+            try {
+                // Intentar parsear solo si hay un valor válido
+                const parsedUser = JSON.parse(userSaved);
+                console.log(parsedUser); 
+                return parsedUser;
+            } catch (error) {
+                console.error("Error al parsear el JSON:", error);
+                return null;
+            }
+        } else {
+            console.log("No hay usuario guardado.");
+            return null;
+        }
+    }
+
     const form = document.getElementById('leadForm');
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
@@ -125,16 +151,22 @@
       const accept = document.getElementById('accept').checked; // Cambiado a .checked
       const form = document.getElementById('leadForm');
       const loader = document.getElementById('loader');
+
+
+
       
       form.style.display= 'none'
       loader.style.display= 'block'
 
-      const data = {
+      const data =  {
         name: name,
         email: email,
         birthdate: birthdate,
         accept: accept // Esto ahora es un booleano
       };
+
+      saveUser(data);
+      getUser();
 
       try {
         const response = await fetch('/api/leads', {
@@ -154,6 +186,18 @@
         console.error('Error al enviar el formulario:', error);
       }
     });
+
+    function redirectToWelcome() {
+        const userSaved = getUser();
+        if (!userSaved) {
+            return
+        } else {
+            // Redirigir a la página de bienvenida si el usuario está guardado
+            window.location.href = '/welcome.html';
+        }
+    }
+
+    window.onload = redirectToWelcome;
 </script>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
