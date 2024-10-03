@@ -252,7 +252,7 @@ function scheduleBirthdayEmail(lead) {
   birthdate.setHours(10, 0, 0, 0);  // 10:00 AM
 
   // Enviar el correo de cumpleaños
-  console.log('Correo de cumpleaños programado para', lead.email, 'en', birthdate);
+  console.log('Correo de Cumpleaños programado para', lead.email, 'en', birthdate);
   const jobBirthday = schedule.scheduleJob(birthdate, async () => {
     try {
       const customHtmlContent = await fs.readFile(customHtmlBirthday, 'utf8');
@@ -272,7 +272,7 @@ function scheduleBirthdayEmail(lead) {
   // Programar el envío de un correo 5 días antes del cumpleaños
   const reminderDate = new Date(birthdate);
   reminderDate.setDate(birthdate.getDate() - 5);  // 5 días antes del cumpleaños
-  console.log('Correo de recordatorio programado para', lead.email, 'en', reminderDate);
+  console.log('Correo de Recordatorio programado para', lead.email, 'en', reminderDate);
   
   const jobReminder = schedule.scheduleJob(reminderDate, async () => {
     try {
