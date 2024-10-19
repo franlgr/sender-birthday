@@ -13,6 +13,29 @@
     table {
       margin-top: 20px;
     }
+    /* Botón sutil de eliminar */
+    .delete-btn {
+      background-color: transparent;
+      border: none;
+      cursor: pointer;
+      transition: background-color 0.2s ease, transform 0.1s ease;
+    }
+
+    /* Icono del botón */
+    .delete-icon {
+      width: 30px;
+    }
+
+    /* Hover sobre el botón */
+    .delete-btn:hover {
+      transform: scale(1.1); /* Efecto de agrandamiento ligero */
+    }
+
+    /* Hover sobre el icono */
+    .delete-btn:hover .delete-icon {
+      filter: invert(70%); /* Se vuelve más oscuro al pasar el cursor */
+    }
+
   </style>
 </head>
 <body>
@@ -78,6 +101,7 @@
           <th>Nombre</th>
           <th>Email</th>
           <th>Fecha de Nacimiento</th>
+          <th>Eliminar</th>
         </tr>
       </thead>
       <tbody id="leads-table-body">
@@ -106,6 +130,36 @@
         }
     }
 
+        // Función para eliminar un lead por su ID
+        async function deleteLead(id) {
+        try {
+          const response = await fetch(`/api/leads/${id}`, {
+            method: 'DELETE',
+          });
+
+          if (!response.ok) {
+            const errorData = await response.json();
+            console.error('Error al eliminar el lead:', errorData.message);
+            return;
+          }
+
+          console.log('Lead eliminado exitosamente');
+          fetchLeads(); // Actualiza la tabla de leads después de la eliminación
+        } catch (error) {
+          console.error('Error en la solicitud:', error);
+        }
+      }
+
+
+    function formatDateToDDMMYYYY(dateString) {
+      const date = new Date(dateString);
+      const day = date.getUTCDate().toString().padStart(2, '0'); // Día en formato 2 dígitos
+      const month = (date.getUTCMonth() + 1).toString().padStart(2, '0'); // Mes en formato 2 dígitos
+      const year = date.getUTCFullYear(); // Año
+
+      return `${day}/${month}/${year}`; // Formato dd/mm/aaaa
+    }
+
     // Función para obtener los leads desde el servidor
     async function fetchLeads() {
       try {
@@ -121,7 +175,12 @@
           row.innerHTML = `
             <td>${lead.name}</td>
             <td>${lead.email}</td>
-            <td>${new Date(lead.birthdate).toLocaleDateString()}</td>
+            <td>${formatDateToDDMMYYYY(lead.birthdate)}</td>
+            <td>
+              <button onclick="deleteLead('${lead._id}')" class="delete-btn">
+                <img src="https://www.svgrepo.com/show/530501/delete.svg" alt="Eliminar" class="delete-icon" />
+              </button>
+            </td>
           `;
           tbody.appendChild(row);
         });
@@ -129,6 +188,11 @@
         console.error('Error al obtener los leads:', error);
       }
     }
+
+
+
+
+
 
     // Agrega las funciones al evento load
     window.addEventListener('load', fetchWifiCredentials);

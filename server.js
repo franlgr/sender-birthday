@@ -200,6 +200,23 @@ console.log(lead)
   }
 });
 
+// Ruta para eliminar un lead por su ID
+app.delete('/api/leads/:id', async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const lead = await Lead.findByIdAndDelete(id); // Buscar y eliminar el lead
+    if (!lead) {
+      return res.status(404).send({ message: 'Lead no encontrado.' });
+    }
+    res.status(200).send({ message: 'Lead eliminado exitosamente.' });
+  } catch (error) {
+    res.status(500).send({ message: 'Error al eliminar el lead.', error });
+    console.log({ message: 'Error al eliminar el lead.', error })
+  }
+});
+
+
 // Ruta para obtener los datos de Wi-Fi
 app.get('/api/wifi', async (req, res) => {
   try {
@@ -292,15 +309,16 @@ function scheduleBirthdayEmail(lead) {
 }
 
 
-// Ruta para obtener todos los leads guardados
+// Ruta para obtener todos los leads guardados y ordenados
 app.get('/api/leads', async (req, res) => {
-    try {
-      const leads = await Lead.find(); // Obtener todos los leads de MongoDB
-      res.json(leads); // Enviar los leads como respuesta
-    } catch (error) {
-      res.status(500).send({ message: "Error al obtener los leads.", error });
-    }
-  });
+  try {
+    const leads = await Lead.find().sort({ createdAt: -1 }); // Ordenar del más reciente al más antiguo
+    res.json(leads); // Enviar los leads como respuesta
+  } catch (error) {
+    res.status(500).send({ message: "Error al obtener los leads.", error });
+  }
+});
+
 
   // Función para reprogramar los correos de cumpleaños al reiniciar el servidor
 async function reprogramarCumpleaños() {
