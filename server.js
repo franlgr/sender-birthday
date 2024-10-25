@@ -238,7 +238,7 @@ async function sendNotyEmail(lead) {
     const customHtmlContent = await fs.readFile(customHtmlWelcome, 'utf8');
 
     await transporter.sendMail({
-      from: `"Bienvenido a Florinda Coffee House" <felicitaciones@sender.picoai.app>`,
+      c,
       to: lead.email,
       subject: `Gracias por tu visita ${lead.name}!`,
       html: customHtmlContent // Envía el contenido HTML leído
@@ -246,7 +246,7 @@ async function sendNotyEmail(lead) {
 
     console.log(`Correo de BIENVENIDA enviado a ${lead.email}`);
   } catch (error) {
-    console.error(`Error al enviar el correo de cumpleaños a ${lead.email}:`, error);
+    console.error(`Error al enviar el correo de bienvenida a ${lead.email}:`, error);
   }
 }
 
