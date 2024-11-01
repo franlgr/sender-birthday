@@ -1,6 +1,6 @@
 server {
     listen 80;
-    server_name floreria-magnolia.picoai.app;
+    server_name coffee-wi-fi.picoai.app;
 
     # SSL configuration
     listen 443 ssl http2;
@@ -13,6 +13,6 @@ server {
         proxy_set_header Connection "Upgrade";
         proxy_http_version 1.1;
         proxy_set_header Host $host;
-        proxy_pass http://localhost:6767;
+        proxy_pass http://localhost:3535;
     }
 }
